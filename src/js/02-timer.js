@@ -2,11 +2,13 @@ import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
 import Notiflix from 'notiflix';
 
+
 const startBtn = document.querySelector('[data-start]');
 const daysValue = document.querySelector('[data-days]');
 const hoursValue = document.querySelector('[data-hours]');
 const minutesValue = document.querySelector('[data-minutes]');
 const secondsValue = document.querySelector('[data-seconds]');
+const inputEl = document.querySelector('#datetime-picker');
 
 startBtn.addEventListener("click", handleTimerStart);
 
@@ -16,10 +18,11 @@ const options = {
   time_24hr: true,
   defaultDate: new Date(),
   minuteIncrement: 1,
-  onClose(selectedDates) {
-    const selectedDate = selectedDates[0];
-    if (selectedDate.getTime() < new Date().getTime()) {
+  onClose([selectedDates]) {
+    const selectedDate = selectedDates;
+    if (selectedDate.getTime() < Date.now()) {
       Notiflix.Notify.info("Please choose a date in the future");
+      startBtn.disabled = true;
     } else {
       startBtn.disabled = false;
     }
@@ -29,30 +32,37 @@ const options = {
 flatpickr("#datetime-picker", options);
 
 let timerId = null;
+let timeLeft = null;
 
 
 function handleTimerStart() {
-  const selectedDate = flatpickr("#datetime-picker").selectedDates[0];
-  const currentTime = new Date().getTime;
-  const timeLeft = selectedDate.getTime() - new Date().getTime();
+  timerUpdate();
   if (timeLeft <= 0) {
     return;
   }
   timerId = setInterval(() => {
-    const timeLeft = selectedDate.getTime() - new Date().getTime();
+    timerUpdate();
     if (timeLeft <= 0) {
       clearInterval(timerId);
       return;
     }
-    const { days, hours, minutes, seconds } = convertMs(timeLeft);
-    daysValue.textContent = formatNumber(days);
-    hoursValue.textContent = formatNumber(hours);
-    minutesValue.textContent = formatNumber(minutes);
-    secondsValue.textContent = formatNumber(seconds);
+    updateTimerDisplay(timeLeft);
   }, 1000);
 }
 
+function timerUpdate() {
+  const selectedDate =  new Date([inputEl.value]).getTime();
+  timeLeft = selectedDate - Date.now();
+  return timeLeft;
+}
 
+function updateTimerDisplay(timeLeft) {
+  const { days, hours, minutes, seconds } = convertMs(timeLeft);
+  daysValue.textContent = formatNumber(days);
+  hoursValue.textContent = formatNumber(hours);
+  minutesValue.textContent = formatNumber(minutes);
+  secondsValue.textContent = formatNumber(seconds);
+}
 
 function convertMs(ms) {
   const second = 1000;
@@ -71,3 +81,6 @@ function convertMs(ms) {
 function formatNumber(num) {
   return num.toString().padStart(2, "0");
 }
+
+
+
